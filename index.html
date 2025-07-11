@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hogwarts Spellbook</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Uncial+Antiqua&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #d4af37;
+            overflow-x: hidden;
+            min-height: 100vh;
+            cursor: none;
+            position: relative;
+        }
+        
+        .magical-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #ffd700 0%, #ffaa00 100%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 20px #ffd700;
+            transition: transform 0.1s ease;
+        }
+        
+        .sparkle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: #ffd700;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            animation: sparkleFloat 2s ease-out forwards;
+        }
+        
+        @keyframes sparkleFloat {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0) translateY(-50px); }
+        }
+        
+        .magical-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="%23ffd700" opacity="0.3"><animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/></circle><circle cx="80" cy="40" r="1" fill="%23ffd700" opacity="0.2"><animate attributeName="opacity" values="0.2;0.7;0.2" dur="4s" repeatCount="indefinite"/></circle><circle cx="60" cy="80" r="1" fill="%23ffd700" opacity="0.4"><animate attributeName="opacity" values="0.4;0.9;0.4" dur="2s" repeatCount="indefinite"/></circle></svg>') repeat;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .title {
+            font-family: 'Uncial Antiqua', cursive;
+            font-size: 3.5rem;
+            color: #d4af37;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.3); }
+            to { text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 30px rgba(212, 175, 55, 0.6); }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #c0c0c0;
+            font-style: italic;
+        }
+        
+        .floating-wand {
+            position: absolute;
+            top: 50%;
+            right: -100px;
+            width: 80px;
+            height: 8px;
+            background: linear-gradient(45deg, #8B4513 0%, #CD853F 50%, #D2691E 100%);
+            border-radius: 4px;
+            transform: translateY(-50%) rotate(45deg);
+            animation: floatWand 3s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        .floating-wand::before {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -2px;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #ffd700 0%, #ffaa00 100%);
+            border-radius: 50%;
+            animation: wandTip 2s ease-in-out infinite;
+        }
+        
+        @keyframes floatWand {
+            0%, 100% { transform: translateY(-50%) rotate(45deg) translateX(0); }
+            50% { transform: translateY(-50%) rotate(45deg) translateX(10px); }
+        }
+        
+        @keyframes wandTip {
+            0%, 100% { box-shadow: 0 0 10px #ffd700; }
+            50% { box-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700; }
+        }
+        
+        .spellbook {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .spell-card {
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.3) 0%, rgba(160, 82, 45, 0.2) 100%);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .spell-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .spell-card:hover::before {
+            left: 100%;
+        }
+        
+        .spell-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+            border-color: #ffd700;
+        }
+        
+        .spell-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .spell-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #d4af37;
+        }
+        
+        .spell-description {
+            font-size: 0.9rem;
+            color: #c0c0c0;
+            font-style: italic;
+        }
+        
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffd700;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            border: 2px solid #d4af37;
+            text-align: center;
+        }
+        
+        .lumos-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.1) 100%);
+            pointer-events: none;
+            z-index: 5000;
+            opacity: 0;
+        }
+        
+        .protego-shield {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border: 3px solid #4169E1;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 5000;
+            background: radial-gradient(circle, rgba(65, 105, 225, 0.2) 0%, rgba(65, 105, 225, 0.05) 100%);
+            box-shadow: 0 0 50px #4169E1, inset 0 0 50px rgba(65, 105, 225, 0.3);
+        }
+        
+        .ice-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(173, 216, 230, 0.3) 0%, rgba(135, 206, 235, 0.3) 100%);
+            pointer-events: none;
+            z-index: 5000;
+            opacity: 0;
+        }
+        
+        .fire-effect {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(0deg, rgba(255, 69, 0, 0.8) 0%, rgba(255, 140, 0, 0.4) 50%, transparent 100%);
+            pointer-events: none;
+            z-index: 5000;
+            opacity: 0;
+        }
+        
+        .vine {
+            position: fixed;
+            bottom: 0;
+            width: 20px;
+            height: 0;
+            background: linear-gradient(0deg, #228B22 0%, #32CD32 100%);
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 5000;
+            opacity: 0;
+        }
+        
+        .spark {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: #FF0000;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5000;
+            box-shadow: 0 0 10px #FF0000;
+        }
+        
+        .blast-wave {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 2px solid #8A2BE2;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 5000;
+        }
+        
+        .screen-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        @media (max-width: 768px) {
+            .title { font-size: 2.5rem; }
+            .floating-wand { display: none; }
+            .spellbook { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="magical-cursor"></div>
+    <div class="magical-bg"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Hogwarts Spellbook</h1>
+            <p class="subtitle">Cast spells with the power of your mouse</p>
+            <div class="floating-wand"></div>
+        </div>
+        
+        <div class="spellbook">
+            <div class="spell-card" data-spell="lumos">
+                <span class="spell-icon">✨</span>
+                <div class="spell-name">Lumos</div>
+                <div class="spell-description">Illuminates the area with bright light</div>
+            </div>
+            
+            <div class="spell-card" data-spell="nox">
+                <span class="spell-icon">🌙</span>
+                <div class="spell-name">Nox</div>
+                <div class="spell-description">Extinguishes magical light</div>
+            </div>
+            
+            <div class="spell-card" data-spell="protego">
+                <span class="spell-icon">🛡️</span>
+                <div class="spell-name">Protego</div>
+                <div class="spell-description">Creates a magical protective shield</div>
+            </div>
+            
+            <div class="spell-card" data-spell="expelliarmus">
+                <span class="spell-icon">⚡</span>
+                <div class="spell-name">Expelliarmus</div>
+                <div class="spell-description">Disarms opponents with red sparks</div>
+            </div>
+            
+            <div class="spell-card" data-spell="stupefy">
+                <span class="spell-icon">🌪️</span>
+                <div class="spell-name">Stupefy</div>
+                <div class="spell-description">Stuns target with powerful blast</div>
+            </div>
+            
+            <div class="spell-card" data-spell="herbivicus">
+                <span class="spell-icon">🌿</span>
+                <div class="spell-name">Herbivicus</div>
+                <div class="spell-description">Accelerates plant growth</div>
+            </div>
+            
+            <div class="spell-card" data-spell="glacius">
+                <span class="spell-icon">❄️</span>
+                <div class="spell-name">Glacius</div>
+                <div class="spell-description">Freezes target with icy magic</div>
+            </div>
+            
+            <div class="spell-card" data-spell="incendio">
+                <span class="spell-icon">🔥</span>
+                <div class="spell-name">Incendio</div>
+                <div class="spell-description">Creates magical fire</div>
+            </div>
+            
+            <div class="spell-card" data-spell="finite">
+                <span class="spell-icon">🔮</span>
+                <div class="spell-name">Finite Incantatem</div>
+                <div class="spell-description">Cancels all active spells</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Effect Elements -->
+    <div class="feedback"></div>
+    <div class="lumos-effect"></div>
+    <div class="protego-shield"></div>
+    <div class="ice-overlay"></div>
+    <div class="fire-effect"></div>
+    
+    <script>
+        // Magical cursor and sparkles
+        const cursor = document.querySelector('.magical-cursor');
+        const body = document.body;
+        
+        let mouseX = 0;
+        let mouseY = 0;
+        let cursorX = 0;
+        let cursorY = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Create sparkles
+            if (Math.random() < 0.3) {
+                createSparkle(mouseX, mouseY);
+            }
+        });
+        
+        function animateCursor() {
+            const dx = mouseX - cursorX;
+            const dy = mouseY - cursorY;
+            
+            cursorX += dx * 0.1;
+            cursorY += dy * 0.1;
+            
+            cursor.style.left = cursorX + 'px';
+            cursor.style.top = cursorY + 'px';
+            
+            requestAnimationFrame(animateCursor);
+        }
+        
+        animateCursor();
+        
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            body.appendChild(sparkle);
+            
+            setTimeout(() => {
+                sparkle.remove();
+            }, 2000);
+        }
+        
+        // Spell casting system
+        const spells = document.querySelectorAll('.spell-card');
+        const feedback = document.querySelector('.feedback');
+        const lumosEffect = document.querySelector('.lumos-effect');
+        const protegoShield = document.querySelector('.protego-shield');
+        const iceOverlay = document.querySelector('.ice-overlay');
+        const fireEffect = document.querySelector('.fire-effect');
+        
+        let activeEffects = [];
+        
+        function showFeedback(spell) {
+            feedback.textContent = `You cast ${spell}!`;
+            feedback.style.opacity = '1';
+            
+            anime({
+                targets: feedback,
+                scale: [0.8, 1],
+                duration: 300,
+                easing: 'easeOutElastic(1, .8)'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: feedback,
+                    opacity: 0,
+                    scale: 0.8,
+                    duration: 300
+                });
+            }, 2000);
+        }
+        
+        function playSpellSound(spell) {
+            // Create audio context for spell sounds
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            switch(spell) {
+                case 'lumos':
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.5);
+                    break;
+                case 'expelliarmus':
+                    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.3);
+                    break;
+                case 'stupefy':
+                    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.4);
+                    break;
+                default:
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            }
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+        
+        function castLumos() {
+            lumosEffect.style.opacity = '1';
+            activeEffects.push('lumos');
+            
+            anime({
+                targets: lumosEffect,
+                opacity: [0, 1],
+                duration: 1000,
+                easing: 'easeInOutQuad'
+            });
+        }
+        
+        function castNox() {
+            if (activeEffects.includes('lumos')) {
+                anime({
+                    targets: lumosEffect,
+                    opacity: 0,
+                    duration: 1000,
+                    easing: 'easeInOutQuad'
+                });
+                activeEffects = activeEffects.filter(effect => effect !== 'lumos');
+            }
+        }
+        
+        function castProtego() {
+            protegoShield.style.opacity = '1';
+            activeEffects.push('protego');
+            
+            anime({
+                targets: protegoShield,
+                scale: [0, 1],
+                opacity: [0, 1],
+                duration: 500,
+                easing: 'easeOutElastic(1, .8)'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: protegoShield,
+                    opacity: 0,
+                    scale: 0,
+                    duration: 500
+                });
+                activeEffects = activeEffects.filter(effect => effect !== 'protego');
+            }, 3000);
+        }
+        
+        function castExpelliarmus() {
+            const sparks = [];
+            
+            for (let i = 0; i < 20; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.style.left = Math.random() * window.innerWidth + 'px';
+                spark.style.top = Math.random() * window.innerHeight + 'px';
+                body.appendChild(spark);
+                sparks.push(spark);
+                
+                anime({
+                    targets: spark,
+                    translateX: (Math.random() - 0.5) * 500,
+                    translateY: (Math.random() - 0.5) * 500,
+                    opacity: [1, 0],
+                    duration: 1000,
+                    easing: 'easeOutQuad'
+                });
+            }
+            
+            setTimeout(() => {
+                sparks.forEach(spark => spark.remove());
+            }, 1000);
+        }
+        
+        function castStupefy() {
+            body.classList.add('screen-shake');
+            
+            const blastWave = document.createElement('div');
+            blastWave.className = 'blast-wave';
+            body.appendChild(blastWave);
+            
+            anime({
+                targets: blastWave,
+                scale: [1, 20],
+                opacity: [1, 0],
+                duration: 800,
+                easing: 'easeOutQuad'
+            });
+            
+            setTimeout(() => {
+                body.classList.remove('screen-shake');
+                blastWave.remove();
+            }, 800);
+        }
+        
+        function castHerbivicus() {
+            const vines = [];
+            
+            for (let i = 0; i < 10; i++) {
+                const vine = document.createElement('div');
+                vine.className = 'vine';
+                vine.style.left = Math.random() * window.innerWidth + 'px';
+                vine.style.opacity = '1';
+                body.appendChild(vine);
+                vines.push(vine);
+                
+                anime({
+                    targets: vine,
+                    height: Math.random() * 300 + 100,
+                    duration: 1500,
+                    easing: 'easeOutQuad'
+                });
+            }
+            
+            activeEffects.push('herbivicus');
+            
+            setTimeout(() => {
+                vines.forEach(vine => {
+                    anime({
+                        targets: vine,
+                        opacity: 0,
+                        duration: 1000,
+                        complete: () => vine.remove()
+                    });
+                });
+                activeEffects = activeEffects.filter(effect => effect !== 'herbivicus');
+            }, 5000);
+        }
+        
+        function castGlacius() {
+            iceOverlay.style.opacity = '1';
+            activeEffects.push('glacius');
+            
+            anime({
+                targets: iceOverlay,
+                opacity: [0, 1],
+                duration: 1000,
+                easing: 'easeInOutQuad'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: iceOverlay,
+                    opacity: 0,
+                    duration: 1000
+                });
+                activeEffects = activeEffects.filter(effect => effect !== 'glacius');
+            }, 4000);
+        }
+        
+        function castIncendio() {
+            fireEffect.style.opacity = '1';
+            activeEffects.push('incendio');
+            
+            anime({
+                targets: fireEffect,
+                opacity: [0, 1],
+                duration: 800,
+                easing: 'easeInOutQuad'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: fireEffect,
+                    opacity: 0,
+                    duration: 1000
+                });
+                activeEffects = activeEffects.filter(effect => effect !== 'incendio');
+            }, 4000);
+        }
+        
+        function castFiniteIncantatem() {
+            // Clear all active effects
+            const allEffects = [lumosEffect, protegoShield, iceOverlay, fireEffect];
+            
+            allEffects.forEach(effect => {
+                anime({
+                    targets: effect,
+                    opacity: 0,
+                    duration: 500
+                });
+            });
+            
+            // Remove all vines
+            const vines = document.querySelectorAll('.vine');
+            vines.forEach(vine => vine.remove());
+            
+            // Remove all sparks
+            const sparks = document.querySelectorAll('.spark');
+            sparks.forEach(spark => spark.remove());
+            
+            activeEffects = [];
+        }
+        
+        // Spell casting event listeners
+        spells.forEach(spell => {
+            spell.addEventListener('click', () => {
+                const spellName = spell.dataset.spell;
+                
+                playSpellSound(spellName);
+                showFeedback(spellName.charAt(0).toUpperCase() + spellName.slice(1));
+                
+                // Add casting animation to the card
+                anime({
+                    targets: spell,
+                    scale: [1, 1.1, 1],
+                    duration: 300,
+                    easing: 'easeOutElastic(1, .8)'
+                });
+                
+                switch(spellName) {
+                    case 'lumos':
+                        castLumos();
+                        break;
+                    case 'nox':
+                        castNox();
+                        break;
+                    case 'protego':
+                        castProtego();
+                        break;
+                    case 'expelliarmus':
+                        castExpelliarmus();
+                        break;
+                    case 'stupefy':
+                        castStupefy();
+                        break;
+                    case 'herbivicus':
+                        castHerbivicus();
+                        break;
+                    case 'glacius':
+                        castGlacius();
+                        break;
+                    case 'incendio':
+                        castIncendio();
+                        break;
+                    case 'finite':
+                        castFiniteIncantatem();
+                        break;
+                }
+            });
+        });
+        
+        // Mobile touch support
+        document.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            createSparkle(touch.clientX, touch.clientY);
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            if (Math.random() < 0.3) {
+                createSparkle(touch.clientX, touch.clientY);
+            }
+        });
+    </script>
+</body>
+</html>
