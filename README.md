@@ -28,7 +28,7 @@ A magical web experience where you can cast spells from the Harry Potter univers
 
 ##  Live Demo
 
-
+https://wiz-lang.vercel.app/
 
 ##  Spells Available
 
